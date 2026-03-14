@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokéMurger Fusion Lab</title>
+<style>
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:white;
+text-align:center;
+padding:30px
+}
+.container{max-width:800px;margin:auto}
+h1{font-size:36px;margin-bottom:10px}
+p{opacity:0.8}
+input{
+padding:12px;
+margin:10px;
+border-radius:10px;
+border:none;
+width:200px
+}
+button{
+padding:12px 20px;
+border:none;
+border-radius:12px;
+background:#22c55e;
+color:white;
+font-size:16px;
+cursor:pointer;
+margin:6px
+}
+button:hover{background:#16a34a}
+.result{
+margin-top:30px;
+padding:20px;
+background:#020617;
+border-radius:16px
+}
+img{width:160px}
+.name{font-size:26px;margin-top:10px}
+.types{opacity:0.8;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🧬 PokéMurger Fusion Lab</h1>
+<p>Combine two Pokémon and generate a brand new fusion creature</p><input id="poke1" placeholder="First Pokémon">
+<input id="poke2" placeholder="Second Pokémon">
+<br>
+<button onclick="mergePokemon()">Merge Pokémon</button>
+<button onclick="randomMerge()">Random Fusion</button><div class="result" id="result"></div>
+</div><script>
+async function getPokemon(name){
+try{
+let res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
+if(!res.ok) return null
+return await res.json()
+}catch(e){return null}
+}
+
+function fuseName(a,b){
+return a.slice(0,Math.ceil(a.length/2)) + b.slice(Math.floor(b.length/2))
+}
+
+function combineTypes(t1,t2){
+let types = [...new Set([...t1,...t2])]
+return types.join(" / ")
+}
+
+async function mergePokemon(){
+let p1 = document.getElementById('poke1').value
+let p2 = document.getElementById('poke2').value
+
+let data1 = await getPokemon(p1)
+let data2 = await getPokemon(p2)
+
+if(!data1 || !data2){
+document.getElementById('result').innerHTML = "❌ Pokémon not found"
+return
+}
+
+let newName = fuseName(p1,p2)
+
+let img1 = data1.sprites.front_default
+let img2 = data2.sprites.front_default
+
+let types1 = data1.types.map(t=>t.type.name)
+let types2 = data2.types.map(t=>t.type.name)
+
+let fusionTypes = combineTypes(types1,types2)
+
+let resultHTML = `
+<h2>Fusion Created!</h2>
+<div>
+<img src="${img1}">
+<img src="${img2}">
+</div>
+<div class="name">${newName}</div>
+<div class="types">Type: ${fusionTypes}</div>
+<br>
+<button onclick="downloadFusion('${newName}')">Download Card</button>
+`
+
+document.getElementById('result').innerHTML = resultHTML
+}
+
+async function randomMerge(){
+let id1 = Math.floor(Math.random()*151)+1
+let id2 = Math.floor(Math.random()*151)+1
+
+let p1 = await fetch(`https://pokeapi.co/api/v2/pokemon/${id1}`).then(r=>r.json())
+let p2 = await fetch(`https://pokeapi.co/api/v2/pokemon/${id2}`).then(r=>r.json())
+
+let name1 = p1.name
+let name2 = p2.name
+
+let newName = fuseName(name1,name2)
+
+let types1 = p1.types.map(t=>t.type.name)
+let types2 = p2.types.map(t=>t.type.name)
+
+let fusionTypes = combineTypes(types1,types2)
+
+let resultHTML = `
+<h2>Random Fusion!</h2>
+<div>
+<img src="${p1.sprites.front_default}">
+<img src="${p2.sprites.front_default}">
+</div>
+<div class="name">${newName}</div>
+<div class="types">Type: ${fusionTypes}</div>
+<br>
+<button onclick="downloadFusion('${newName}')">Download Card</button>
+`
+
+document.getElementById('result').innerHTML = resultHTML
+}
+
+function downloadFusion(name){
+let element = document.createElement('a')
+let file = new Blob([`Fusion Pokémon: ${name}`],{type:'text/plain'})
+
+element.href = URL.createObjectURL(file)
+element.download = name+".txt"
+document.body.appendChild(element)
+element.click()
+}
+</script></body>
+                                                                     </html>
